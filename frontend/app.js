@@ -1,5 +1,5 @@
 // Change this value if the backend is deployed to a public URL.
-const API_URL = "https://time-table-sl8m.onrender.com";
+const API_URL = "https://time-table-dl8m.onrender.com/api/timetable";
 
 const form = document.querySelector("#timetable-form");
 const recordsBody = document.querySelector("#records-body");
