@@ -1,5 +1,4 @@
-// Change this value if the backend is deployed to a public URL.
-const API_URL = "https://time-table-sl8m.onrender.com";
+const API_URL = "https://time-table-sl8m.onrender.com/api/timetable";
 
 const form = document.querySelector("#timetable-form");
 const recordsBody = document.querySelector("#records-body");
@@ -17,8 +16,7 @@ function showStatus(message, type = "success") {
 }
 
 function getFormData() {
-  const formData = new FormData(form);
-  return Object.fromEntries(formData.entries());
+  return Object.fromEntries(new FormData(form).entries());
 }
 
 function resetForm() {
@@ -33,20 +31,31 @@ async function requestJson(url, options = {}) {
   const response = await fetch(url, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
+      ...(options.headers || {}),
+      "Content-Type": "application/json"
     }
   });
 
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      "The server returned a non-JSON response. Check the API URL."
+    );
+  }
+
   const data = await response.json();
+
   if (!response.ok) {
     throw new Error(data.error || "The request failed.");
   }
+
   return data;
 }
 
 async function loadRecords() {
   recordsBody.replaceChildren();
+
   const loadingRow = document.createElement("tr");
   const loadingCell = document.createElement("td");
   loadingCell.colSpan = 6;
@@ -55,16 +64,15 @@ async function loadRecords() {
   recordsBody.append(loadingRow);
 
   try {
-    const responseData = await requestJson(API_URL);
-const records = Array.isArray(responseData)
-  ? responseData
-  : responseData.records;
+    const records = await requestJson(API_URL);
 
-if (!Array.isArray(records)) {
-  throw new Error("The API response does not contain a timetable records list.");
-}
+    if (!Array.isArray(records)) {
+      throw new Error(
+        "The timetable API did not return a list. Check the API endpoint."
+      );
+    }
 
-recordsBody.replaceChildren();
+    recordsBody.replaceChildren();
 
     if (records.length === 0) {
       const row = document.createElement("tr");
@@ -78,6 +86,7 @@ recordsBody.replaceChildren();
 
     for (const record of records) {
       const row = document.createElement("tr");
+
       const values = [
         record.id,
         `${record.course_code} — ${record.course_name}`,
@@ -88,12 +97,12 @@ recordsBody.replaceChildren();
 
       for (const value of values) {
         const cell = document.createElement("td");
-        // textContent prevents user-entered text from being interpreted as HTML.
-        cell.textContent = value;
+        cell.textContent = value ?? "";
         row.append(cell);
       }
 
       const actionsCell = document.createElement("td");
+
       const editButton = document.createElement("button");
       editButton.className = "small secondary";
       editButton.textContent = "Edit";
@@ -112,24 +121,32 @@ recordsBody.replaceChildren();
     }
   } catch (error) {
     recordsBody.replaceChildren();
+
     const row = document.createElement("tr");
     const cell = document.createElement("td");
     cell.colSpan = 6;
-    cell.textContent = "Could not load records. Check that the backend is running.";
+    cell.textContent = "Could not load timetable records.";
     row.append(cell);
     recordsBody.append(row);
+
     showStatus(error.message, "error");
   }
 }
 
 function startEditing(record) {
   editingId = record.id;
+
   for (const field of [
-    "course_code", "course_name", "day_of_week",
-    "start_time", "end_time", "goal"
+    "course_code",
+    "course_name",
+    "day_of_week",
+    "start_time",
+    "end_time",
+    "goal"
   ]) {
-    form.elements[field].value = record[field];
+    form.elements[field].value = record[field] ?? "";
   }
+
   formTitle.textContent = `Edit record #${record.id}`;
   saveButton.textContent = "Save changes";
   cancelButton.hidden = false;
@@ -137,14 +154,24 @@ function startEditing(record) {
 }
 
 async function deleteRecord(id) {
-  if (!window.confirm(`Delete timetable record #${id}? This cannot be undone.`)) {
+  if (
+    !window.confirm(
+      `Delete timetable record #${id}? This cannot be undone.`
+    )
+  ) {
     return;
   }
 
   try {
-    const result = await requestJson(`${API_URL}/${id}`, { method: "DELETE" });
-    if (editingId === id) resetForm();
-    showStatus(result.message);
+    const result = await requestJson(`${API_URL}/${id}`, {
+      method: "DELETE"
+    });
+
+    if (editingId === id) {
+      resetForm();
+    }
+
+    showStatus(result.message || "Record deleted successfully.");
     await loadRecords();
   } catch (error) {
     showStatus(error.message, "error");
@@ -155,35 +182,40 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const data = getFormData();
+
   if (data.start_time >= data.end_time) {
     showStatus("End time must be later than start time.", "error");
     return;
   }
 
+  saveButton.disabled = true;
+
   try {
+    let result;
+
     if (editingId === null) {
-      const result = await requestJson(API_URL, {
+      result = await requestJson(API_URL, {
         method: "POST",
         body: JSON.stringify(data)
       });
-      showStatus(result.message);
     } else {
-      const result = await requestJson(`${API_URL}/${editingId}`, {
+      result = await requestJson(`${API_URL}/${editingId}`, {
         method: "PUT",
         body: JSON.stringify(data)
       });
-      showStatus(result.message);
     }
 
+    showStatus(result.message || "Record saved successfully.");
     resetForm();
     await loadRecords();
   } catch (error) {
     showStatus(error.message, "error");
+  } finally {
+    saveButton.disabled = false;
   }
 });
 
 cancelButton.addEventListener("click", resetForm);
 refreshButton.addEventListener("click", loadRecords);
 
-// Load saved records when the page opens.
 loadRecords();
