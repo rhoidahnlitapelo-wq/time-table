@@ -55,8 +55,16 @@ async function loadRecords() {
   recordsBody.append(loadingRow);
 
   try {
-    const records = await requestJson(API_URL);
-    recordsBody.replaceChildren();
+    const responseData = await requestJson(API_URL);
+const records = Array.isArray(responseData)
+  ? responseData
+  : responseData.records;
+
+if (!Array.isArray(records)) {
+  throw new Error("The API response does not contain a timetable records list.");
+}
+
+recordsBody.replaceChildren();
 
     if (records.length === 0) {
       const row = document.createElement("tr");
