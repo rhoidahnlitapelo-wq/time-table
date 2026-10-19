@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student Timetable & Goals</title>
+  <style>
+    :root { font-family: Arial, sans-serif; color: #1f2937; background: #f3f6fa; }
+    body { margin: 0; }
+    header { background: #17365d; color: white; padding: 1.5rem; }
+    header h1 { margin: 0 0 .4rem; }
+    main { max-width: 1150px; margin: 1.5rem auto; padding: 0 1rem 2rem; }
+    section { background: white; padding: 1.2rem; margin-bottom: 1.2rem; border-radius: 12px; box-shadow: 0 2px 8px #0000000d; }
+    form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .9rem; }
+    label { display: flex; flex-direction: column; gap: .35rem; font-weight: 600; font-size: .92rem; }
+    input, select, textarea, button { font: inherit; padding: .65rem; border-radius: 6px; border: 1px solid #cbd5e1; }
+    textarea { min-height: 42px; resize: vertical; }  .actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+    button { cursor: pointer; border: 0; background: #1d4ed8; color: white; }
+    button.secondary { background: #475569; }
+    button.danger { background: #b91c1c; }
+    button.small { padding: .4rem .55rem; margin: .1rem; }
+    #status { min-height: 1.3rem; margin: .7rem 0 0; }
+    .error { color: #b91c1c; } .success { color: #166534; }
+    .table-wrap { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+    th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    th { background: #eff4fa; }`````
+    @media (max-width: 760px) { form { grid-template-columns: 1fr; } .wide { grid-column: auto; } }
+  </style>````
+</head>
+<body>
+  <header>
+    <h1>Student Timetable</h1>
+    <div>Manage courses, class times and learning goals.</div>
+  </header>
+
+  <main>
+    <section>
+      <h2 id="form-title">Add a timetable record</h2>
+      <form id="timetable-form">
+        <label>Course code
+          <input name="course_code" maxlength="20" required placeholder="e.g. ICT251">
+        </label>
+        <label>Course name
+          <input name="course_name" maxlength="150" required placeholder="e.g. Web Technologies">
+        </label>
+        <label>Day of the week
+          <select name="day_of_week" required>
+            <option value="">Choose a day</option>
+            <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+            <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+          </select>
+        </label>
+        <label>Start time
+          <input name="start_time" type="time" required>
+        </label>
+        <label>End time
+          <input name="end_time" type="time" required>
+        </label>
+        <label class="wide">Learning goal
+          <textarea name="goal" maxlength="1000" required placeholder="What do you want to achieve for this course?"></textarea>
+        </label>
+        <div class="wide actions">
+          <button id="save-button" type="submit">Add record</button>
+          <button id="cancel-button" class="secondary" type="button" hidden>Cancel edit</button>
+          <button id="refresh-button" class="secondary" type="button">Refresh records</button>
+        </div>
+      </form>
+      <p id="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section>
+      <h2>Saved timetable records</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Course</th><th>Day</th><th>Time</th><th>Learning goal</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="records-body">
+            <tr><td colspan="6">Loading records…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
